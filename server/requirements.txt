@@ -1,0 +1,9 @@
+Flask==3.0.0
+flask-socketio==5.3.5
+flask-cors==4.0.0
+python-socketio==5.10.0
+# eventlet no es necesario - usamos threading que viene con Python
+# Opcional: para mejor detección de interfaces de red
+# netifaces==0.11.0
+# psutil==5.9.6
+
