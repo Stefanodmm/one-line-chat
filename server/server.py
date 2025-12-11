@@ -191,6 +191,63 @@ def handle_encrypted_message(data):
             
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Mensaje cifrado E2E de {user['nickname']} → {users[target_socket_id]['nickname']}")
 
+@socketio.on('privateMessage')
+def handle_private_message(data):
+    if request.sid in users:
+        user = users[request.sid]
+        target_socket_id = data.get('targetSocketId')
+        
+        if target_socket_id and target_socket_id in users:
+            message_data = {
+                'nickname': user['nickname'],
+                'userIP': user['userIP'],
+                'message': data.get('message', ''),
+                'timestamp': datetime.now().isoformat(),
+                'encrypted': False,
+                'isPrivate': True,
+                'fromSocketId': request.sid
+            }
+            
+            socketio.emit('privateMessage', message_data, room=target_socket_id)
+            
+            socketio.emit('privateMessage', {
+                **message_data,
+                'isOwn': True,
+                'fromSocketId': target_socket_id
+            }, room=request.sid)
+            
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Mensaje privado de {user['nickname']} → {users[target_socket_id]['nickname']}")
+
+@socketio.on('encryptedPrivateMessage')
+def handle_encrypted_private_message(data):
+    if request.sid in users:
+        user = users[request.sid]
+        target_socket_id = data.get('targetSocketId')
+        
+        if target_socket_id and target_socket_id in users:
+            message_data = {
+                'nickname': user['nickname'],
+                'userIP': user['userIP'],
+                'message': '[Mensaje cifrado]',
+                'encrypted': True,
+                'encryptedData': data.get('encryptedData'),
+                'iv': data.get('iv'),
+                'publicKey': data.get('publicKey'),
+                'timestamp': datetime.now().isoformat(),
+                'isPrivate': True,
+                'fromSocketId': request.sid
+            }
+            
+            socketio.emit('privateMessage', message_data, room=target_socket_id)
+            
+            socketio.emit('privateMessage', {
+                **message_data,
+                'isOwn': True,
+                'fromSocketId': target_socket_id
+            }, room=request.sid)
+            
+            print(f"[{datetime.now().strftime('%H:%M:%S')}] Mensaje privado cifrado E2E de {user['nickname']} → {users[target_socket_id]['nickname']}")
+
 if __name__ == '__main__':
     local_ip = get_local_ip()
     port = int(os.environ.get('PORT', 5000))
